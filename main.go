@@ -168,25 +168,26 @@ func (c *Conn) Read(buf []byte) (int, error) {
 		return 0, c.err
 	}
 
-	for i := 0; ; {
+	bufLen := len(buf)
+	for readed := 0; ; {
 		if l := len(c.buf); l > 0 {
-			n := len(buf)
-			if l >= len(buf)-i {
-				n = l
+			reading := bufLen - readed
+			if l <= reading {
+				reading = l
 			}
 
-			copy(buf[i:], c.buf[:n])
-			c.buf = c.buf[n:]
-			i += n
+			copy(buf[readed:], c.buf[:reading])
+			c.buf = c.buf[reading:]
+			readed += reading
 		}
 
-		if i == len(buf) {
-			return i, nil
+		if readed == bufLen {
+			return readed, nil
 		}
 
 		c.buf = <-c.readBufChan
 		if c.buf == nil {
-			return i, c.err
+			return readed, c.err
 		}
 	}
 }
